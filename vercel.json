@@ -2,7 +2,23 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "buildCommand": "node server/kb/build.js || echo 'knowledge base build skipped'",
-  "functions": { "api/index.js": { "maxDuration": 120, "includeFiles": "{widget/**,prompts/**,kb/**,server/**}" } },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
-  "crons": [{ "path": "/api/cron", "schedule": "0 3 * * *" }]
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 120,
+      "includeFiles": "{widget/**,prompts/**,kb/**,server/**}"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 3 * * *"
+    }
+  ],
+  "outputDirectory": "public"
 }
