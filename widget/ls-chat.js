@@ -69,6 +69,18 @@
     variants: p.variants.map((v) => ({ id: String(v.id), title: v.title, price: v.price / 100, compareAt: v.compare_at_price ? v.compare_at_price / 100 : null, available: v.available, quantity: null })),
   });
 
+  // Condition panel: one row per part with a dot rating (6 dots, like the product page).
+  const DOT_SCALE = [['nearly mint', 5], ['like new', 6], ['mint', 6], ['lightly used', 4], ['good', 3], ['used', 3], ['worn', 2], ['heavy', 1]];
+  const dotsFor = (v) => { const t = String(v).toLowerCase(); for (const [k, n] of DOT_SCALE) if (t.includes(k)) return n; return null; };
+  const condPanel = (parts) => {
+    const rows = parts.filter((x) => !/^notes?$/i.test(x.label)), note = parts.find((x) => /^notes?$/i.test(x.label));
+    return h('div', { class: 'ls-cp' },
+      ...rows.map((x) => { const n = dotsFor(x.value), v = String(x.value).replace(/\s*condition$/i, '');
+        return h('div', { class: 'ls-cp-row' }, h('span', { class: 'ls-cp-l' }, x.label), h('span', { class: 'ls-cp-v' }, v),
+          n ? h('span', { class: 'ls-cp-d', role: 'img', 'aria-label': `${n} out of 6` }, ...Array.from({ length: 6 }, (_, i) => h('i', { class: i < n ? 'on' : '' }))) : null); }),
+      note ? h('div', { class: 'ls-cp-note' }, note.value) : null);
+  };
+
   // Product links are relative (/products/..). Off the store (test page, preview), point them at the real storefront.
   const storeLink = (u) => { try { const base = state.config.storeUrl; if (base && /^\//.test(u) && new URL(base).hostname.replace(/^www\./, '') !== location.hostname.replace(/^www\./, '')) return base.replace(/\/$/, '') + u; } catch (e) { /* keep relative */ } return u; };
 
@@ -209,7 +221,7 @@
   // ---------- product card + carousel ----------
   function productCard(p) {
     let vi = Math.max(0, p.variants.findIndex((v) => v.available));
-    const price = h('div', { class: 'ls-price' }), stock = h('div', { class: 'ls-stock' }), cond = h('span', { class: 'ls-cond', hidden: true }), condParts = h('div', { class: 'ls-cond-parts', hidden: true });
+    const price = h('div', { class: 'ls-price' }), stock = h('div', { class: 'ls-stock' }), cond = h('span', { class: 'ls-cond', hidden: true }), condBox = h('div', { class: 'ls-cp-wrap', hidden: true });
     const add = h('button', { class: 'ls-btn ls-btn-o', type: 'button' }, 'Add to cart');
     const buy = h('button', { class: 'ls-btn ls-btn-f', type: 'button' }, 'Buy now');
     const select = p.variants.length > 1 ? h('select', { class: 'ls-select', 'aria-label': 'Variant', onchange: (e) => { vi = +e.target.value; upd(); } },
@@ -222,7 +234,7 @@
       const c = v.condition || (p.condition && p.condition.label) || '';
       cond.textContent = c; cond.hidden = !c;
       const parts = (p.condition && p.condition.parts) || [];
-      condParts.textContent = parts.map((x) => `${x.label}: ${x.value}`).join(' · '); condParts.hidden = !parts.length;
+      condBox.replaceChildren(...(parts.length ? [condPanel(parts)] : [])); condBox.hidden = !parts.length;
       add.disabled = buy.disabled = !v.available;
     };
     add.addEventListener('click', () => doAdd(p, p.variants[vi], add));
@@ -232,9 +244,10 @@
     return h('article', { class: 'ls-card' },
       h('div', { class: 'ls-card-top' }, p.image ? h('img', { src: p.image, alt: '', loading: 'lazy' }) : null,
         h('div', { class: 'ls-card-info' },
-          h('strong', { class: 'ls-card-title' }, p.title), cond, condParts, price, stock,
+          h('strong', { class: 'ls-card-title' }, p.title), cond, price, stock,
           chips.length ? h('div', { class: 'ls-specs' }, chips.map((c) => h('span', { class: 'ls-spec' }, c))) : null,
           (p.highlights || []).length ? h('ul', {}, p.highlights.slice(0, chips.length ? 2 : 3).map((x) => h('li', {}, x))) : null,
+          condBox,
           h('a', { class: 'ls-details', href: storeLink(p.url), target: '_blank', rel: 'noopener' }, 'View details ↗'))),
       select, h('div', { class: 'ls-row' }, add, buy));
   }
@@ -352,7 +365,7 @@
   const context = () => ({
     currency: CUR, page: { path: location.pathname, title: document.title },
     product: state.product && { handle: state.product.handle, title: state.product.title, variants: state.product.variants.map((v) => ({ variant_id: v.id, title: v.title, price: v.price, available: v.available })) },
-    cart: state.cart && { count: state.cart.item_count, total: state.cart.total_price / 100, items: state.cart.items.map((i) => ({ title: i.product_title, variant: i.variant_title, variant_id: i.variant_id, qty: i.quantity })) },
+    cart: state.cart && { count: state.cart.item_count, total: state.cart.total_price / 100, items: (state.cart.items || []).map((i) => ({ title: i.product_title, variant: i.variant_title, variant_id: i.variant_id, qty: i.quantity })) },
   });
   const userError = (m) => Object.assign(new Error(m), { user: true });
 
@@ -454,7 +467,15 @@
 .ls-card-top{display:flex;gap:12px}.ls-card-top img{width:72px;height:72px;object-fit:contain;border-radius:12px;background:#f2f3f8;flex:none}
 .ls-card-info{min-width:0;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
 .ls-card-title{font-size:14.5px;line-height:1.25}
-.ls-cond-parts{font-size:11.5px;color:#5b6472;margin-top:3px;line-height:1.35}
+.ls-cp{width:100%;box-sizing:border-box;margin-top:8px;border:1px solid #e7e4ef;border-radius:10px;background:#faf9fd;padding:4px 10px}
+.ls-cp-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:5px 0;font-size:12px}
+.ls-cp-row+.ls-cp-row{border-top:1px solid #efecf6}
+.ls-cp-l{font-weight:600;color:#1c1d2b}
+.ls-cp-v{background:#fff;border:1px solid #e0dcec;border-radius:999px;padding:0 8px;font-size:11px;color:#4a2a7a;white-space:nowrap}
+.ls-cp-d{display:inline-flex;gap:3px;align-items:center}
+.ls-cp-d i{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--a,#4646bf);box-sizing:border-box}
+.ls-cp-d i.on{background:var(--a,#4646bf)}
+.ls-cp-note{font-size:11.5px;color:#5b6472;padding:5px 0 2px;border-top:1px solid #efecf6}
 .ls-cond{background:#e6f4ec;color:#1b7a43;border-radius:8px;padding:1px 8px;font-size:11.5px;font-weight:600}
 .ls-price{font-weight:700}.ls-price del{color:#6a6f86;font-weight:600}.ls-price ins{text-decoration:none;color:var(--a)}
 .ls-stock{font-size:12.5px;font-weight:600;color:#1b7a43}.ls-stock.ls-out{color:#b3261e}
