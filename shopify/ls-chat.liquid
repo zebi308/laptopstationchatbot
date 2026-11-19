@@ -1,0 +1,14 @@
+{%- comment -%}
+  Laptop Station chat widget. Save as snippets/ls-chat.liquid, then add
+  {% render 'ls-chat' %} just before </body> in layout/theme.liquid.
+  Replace YOUR-API-HOST with the domain where the backend is deployed.
+  Optional attributes: data-logo="https://.../logo.png"  data-greeting="..."  data-support-url="https://wa.me/..."  data-accent="#RRGGBB"
+{%- endcomment -%}
+<script
+  src="https://YOUR-API-HOST/widget/ls-chat.js"
+  defer
+  data-title="Laptop Station Assistant"
+  data-accent="#4545c4"
+  data-currency="GBP"
+  {% if template.name == 'product' %}data-product-handle="{{ product.handle }}"{% endif %}
+></script>

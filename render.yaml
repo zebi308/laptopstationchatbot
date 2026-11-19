@@ -1,0 +1,23 @@
+# Render blueprint. Secrets (sync:false) are entered in the Render dashboard, never committed.
+services:
+  - type: web
+    name: laptop-station-chat
+    runtime: docker
+    plan: starter            # a persistent disk needs a paid plan; alternatively use Supabase for storage
+    healthCheckPath: /health
+    disk:
+      name: chat-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - { key: DATA_DIR, value: /var/data }
+      - { key: LLM_PROVIDER, value: openai }
+      - { key: OPENAI_MODEL, value: gpt-5-mini }
+      - { key: SHOPIFY_PUBLIC_URL, value: https://your-live-domain.co.uk }
+      - { key: STORE_CURRENCY, value: GBP }
+      - { key: ALLOWED_ORIGINS, value: "https://your-live-domain.co.uk,https://www.your-live-domain.co.uk,https://your-store.myshopify.com" }
+      - { key: OPENAI_API_KEY, sync: false }
+      - { key: SESSION_SECRET, generateValue: true }
+      - { key: ADMIN_TOKEN, generateValue: true }
+      - { key: SUPPORT_EMAIL, sync: false }
+      - { key: RESEND_API_KEY, sync: false }

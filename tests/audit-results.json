@@ -1,0 +1,921 @@
+{
+  "ran": "2026-11-19T06:48:41.865Z",
+  "summary": {
+    "pass": 123,
+    "fail": 0,
+    "gap": 1,
+    "info": 6
+  },
+  "results": [
+    {
+      "status": "PASS",
+      "id": "SPEC-01",
+      "req": "B2",
+      "name": "Specs parsed from real Laptop Station title formats (CPU, RAM, storage, screen, OS)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "COND-01",
+      "req": "B3",
+      "name": "Condition detected from metafield, tag, title, description (in that order of trust)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "TOOL-00",
+      "req": "NFR",
+      "name": "Catalogue down on cold start: friendly error, no internal URL leaked",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "COND-02",
+      "req": "B3",
+      "name": "Grade reaches the AI and the cards: tag grade, title \"Brand new\", per-variant Condition option",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "COND-03",
+      "req": "B3",
+      "name": "Search can filter by condition",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "TOOL-01",
+      "req": "B1",
+      "name": "Budget search returns only in-stock items under budget",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "TOOL-02",
+      "req": "B1",
+      "name": "Sold-out hidden by default; included only when asked",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "TOOL-03",
+      "req": "B1",
+      "name": "\"Cheapest\" sorts ascending among in-stock items",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "TOOL-04",
+      "req": "B1",
+      "name": "Need-based filters: RAM, storage, screen size, OS (photo-editing style request)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "TOOL-05",
+      "req": "B5",
+      "name": "Add-ons are separate: laptop searches never return them; kind=addon finds them",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "TOOL-06",
+      "req": "B5",
+      "name": "Add-on suggestions: security/software first, in stock only, none for add-on pages",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "TOOL-07",
+      "req": "B1",
+      "name": "Multi-variant product exposes variants with per-variant availability",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "TOOL-08",
+      "req": "B1",
+      "name": "Single-unit stock note kept for in-stock items, dropped for sold-out items",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "TOOL-09",
+      "req": "B2",
+      "name": "Card payload: image, price, compare-at, currency, specs chips, variants",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "TOOL-10",
+      "req": "B4",
+      "name": "cart_action validates variant id, clamps quantity, emits a browser action",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "TOOL-11",
+      "req": "NFR",
+      "name": "Catalogue outage after warm-up: stale cache keeps serving",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "TOOL-12",
+      "req": "C5",
+      "name": "request_human tool shows the contact form and tells the AI whether the team is open",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ORD-01",
+      "req": "C1",
+      "name": "Matching order number + email returns status and DPD tracking link",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ORD-02",
+      "req": "C1",
+      "name": "Reply contains no email, address or phone",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ORD-03",
+      "req": "C1",
+      "name": "Wrong email gets the SAME reply as an unknown order (no enumeration)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ORD-04",
+      "req": "C1",
+      "name": "Injection-style order number never reaches Shopify",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ORD-05",
+      "req": "C1",
+      "name": "Brute-force lock: 3 wrong tries lock the order number even for the right email; a success clears the count",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ORD-06",
+      "req": "C1",
+      "name": "Client-credentials: token fetched once, cached, sent as the Admin header",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ORD-07",
+      "req": "C1",
+      "name": "Admin 401 (token revoked/expired): token refreshed once and the lookup retried",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ORD-08",
+      "req": "C1",
+      "name": "Token near expiry is refreshed on the next lookup",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ORD-09",
+      "req": "C1",
+      "name": "No Admin credentials: graceful failure, no crash (current real state)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "KB-01",
+      "req": "A2",
+      "name": "Crawler builds an index from site pages, policies, local files and curated FAQ (products sitemap skipped)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "KB-02",
+      "req": "A2",
+      "name": "Unconfirmed FAQ placeholders (<<CONFIRM>>) are excluded and reported",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "KB-03",
+      "req": "A2",
+      "name": "Page navigation and footer are stripped from the index",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "KB-04",
+      "req": "C2",
+      "name": "Warranty question retrieves the warranty page",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "KB-05",
+      "req": "C2",
+      "name": "Returns question works with different wording (\"send it back\" finds the refund policy)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "KB-06",
+      "req": "C3",
+      "name": "Delivery question retrieves the delivery page (carrier, dispatch time)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "KB-07",
+      "req": "B7",
+      "name": "Klarna/ClearPay question returns the curated FAQ answer first, with its source link",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "KB-08",
+      "req": "B3",
+      "name": "Grade definitions from an uploaded file are searchable",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "KB-09",
+      "req": "A2",
+      "name": "Unrelated question finds nothing (so the AI says it does not know)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "KB-10",
+      "req": "A2",
+      "name": "search_knowledge tool returns sources; empty KB tells the AI to hand over",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "KB-11",
+      "req": "A2",
+      "name": "FAQ parser: question, answer, optional source line",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "KB-12",
+      "req": "A2",
+      "name": "Website unreachable during a re-crawl: warning reported, previous knowledge not lost",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "HRS-01",
+      "req": "C5",
+      "name": "Opening hours with ranges, split days and timezone; end time exclusive",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "STO-01",
+      "req": "A5",
+      "name": "File store: add/update/remove, survives restart",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "STO-02",
+      "req": "A5",
+      "name": "Supabase store: add/read/update/delete in batches against the REST API",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "STO-03",
+      "req": "A5",
+      "name": "Retention job removes chats after RETENTION_DAYS and leads after LEAD_RETENTION_DAYS",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "STO-04",
+      "req": "A5",
+      "name": "GDPR erase by email: lead, its chats and abandoned-cart records go; other people and opt-outs stay",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ABN-01",
+      "req": "B6",
+      "name": "Phone numbers normalised to E.164 (UK default)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ABN-02",
+      "req": "B6",
+      "name": "Shopify webhook HMAC: valid accepted, tampered/missing rejected",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ABN-03",
+      "req": "B6",
+      "name": "Consented, idle checkout: ONE message after the delay with the recovery link and STOP wording",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ABN-04",
+      "req": "B6",
+      "name": "No SMS consent: skipped (default strict mode); general marketing consent only counts in \"marketing\" mode",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ABN-05",
+      "req": "B6",
+      "name": "Order placed before the delay cancels the message (by checkout token and by email)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ABN-06",
+      "req": "B6",
+      "name": "A later webhook with completed_at marks the checkout completed",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ABN-07",
+      "req": "B6",
+      "name": "STOP opt-out (SMS and WhatsApp numbers) blocks future messages; START re-subscribes",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ABN-08",
+      "req": "B6",
+      "name": "Frequency cap: second checkout from the same phone within 7 days is skipped",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ABN-09",
+      "req": "B6",
+      "name": "Quiet hours: deferred overnight, sent in the morning; carts idle over 24h expire",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ABN-10",
+      "req": "B6",
+      "name": "Provider failure: retried, then given up after 3 tries (never loops forever)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ABN-11",
+      "req": "B6",
+      "name": "WhatsApp: approved template with variables; no free-text body",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ABN-12",
+      "req": "B6",
+      "name": "Message text: item list shortened, name fallback, custom template",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ABN-13",
+      "req": "B6",
+      "name": "Twilio inbound signature check (HMAC-SHA1 over URL + sorted params)",
+      "detail": ""
+    },
+    {
+      "status": "INFO",
+      "id": "ABN-14",
+      "req": "B6",
+      "name": "Real WhatsApp/SMS delivery, Shopify webhook field names and consent flags",
+      "detail": "NOT verifiable here: confirm with LOG_WEBHOOKS=1 and a dry run (MESSAGING_PROVIDER=log) before enabling"
+    },
+    {
+      "status": "PASS",
+      "id": "API-01",
+      "req": "NFR",
+      "name": "Health endpoint",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-02",
+      "req": "NFR",
+      "name": "CORS: allowed origin echoed (with Authorization header allowed); unknown origin 403; preflight 204",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "SEC-01",
+      "req": "NFR",
+      "name": "Session required: no token, garbage token, wrong-secret token and expired token are all rejected (401)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "SEC-02",
+      "req": "NFR",
+      "name": "Session endpoint keeps a valid session id and replaces an invalid one",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-03",
+      "req": "NFR",
+      "name": "Validation: empty messages 400, malformed JSON 4xx, >64KB body 413",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-04",
+      "req": "B1/B2",
+      "name": "Full chat flow: status → cards (specs, grade) → text → done; cards in budget and in stock",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-05",
+      "req": "C2/C3",
+      "name": "Policy question: AI searches the knowledge base and receives the warranty text with its source link",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-06",
+      "req": "C5",
+      "name": "Hand-over request: AI shows the contact form (team open)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-07",
+      "req": "B5",
+      "name": "Add-on question: AI finds Norton via kind=addon",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-08",
+      "req": "A5",
+      "name": "Conversation logging: messages, tools used, cards shown and page are stored; transcript viewable by admin",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-09",
+      "req": "NFR",
+      "name": "History sanitised: client \"system\"/leading assistant turns dropped, content ≤2000 chars, ≤16 turns",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-10",
+      "req": "NFR",
+      "name": "Browser context is fenced as untrusted data and size-capped",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-11",
+      "req": "NFR",
+      "name": "AI provider failure (bad key): SSE error event, server keeps running",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-12",
+      "req": "C1",
+      "name": "Order question with no Admin credentials: tool fails gracefully and the conversation completes",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-13",
+      "req": "B2",
+      "name": "Product endpoint: enriched product (specs, grade); bad handle 400; unknown 404; session required",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-14",
+      "req": "B5",
+      "name": "Add-on endpoint: in-stock add-ons ranked for a laptop; none for an add-on page; bad handle 400",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-15",
+      "req": "A5",
+      "name": "Analytics events: whitelisted names counted, unknown names rejected",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "API-16",
+      "req": "A5/C3",
+      "name": "Config endpoint: opening status, retention, privacy link, curated FAQ answers for instant chips",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "SEC-03",
+      "req": "NFR",
+      "name": "Per-IP rate limit: 5 requests per minute succeed, then HTTP 429",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "SEC-04",
+      "req": "NFR",
+      "name": "Per-session cap: 4th message in an hour is refused for that session only",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "SEC-05",
+      "req": "NFR",
+      "name": "Daily AI-message cap: over the cap the API answers 503 (cost protection)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "LEAD-01",
+      "req": "C5/A5",
+      "name": "Consented request: stored, emailed to support with transcript and reply-to, pushed to webhook; card number redacted",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "LEAD-02",
+      "req": "A5",
+      "name": "Validation: missing name, bad email, missing or non-boolean consent are rejected and nothing is stored",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "LEAD-03",
+      "req": "A5",
+      "name": "CSV export has the lead columns and defuses spreadsheet formulas",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "LEAD-04",
+      "req": "C5",
+      "name": "Out of hours: config says closed, AI form says closed, confirmation says closed, support email flagged OUT OF HOURS",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "LEAD-05",
+      "req": "NFR",
+      "name": "Lead form is rate-limited (10 per hour per IP)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ADM-01",
+      "req": "A5",
+      "name": "Admin API needs the token; dashboard page is served; disabled entirely when no token is set",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ADM-02",
+      "req": "A5",
+      "name": "Analytics: conversations, leads (incl. out of hours), events, KB and AI-budget figures",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ADM-03",
+      "req": "A2",
+      "name": "Admin can re-crawl the knowledge base on demand",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ADM-04",
+      "req": "A5",
+      "name": "GDPR: delete by email removes the lead and its chat; requires an email",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "ADM-05",
+      "req": "NFR",
+      "name": "Admin token guessing is rate-limited (429 after 20 failures)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "WH-01",
+      "req": "B6",
+      "name": "Checkout webhook: bad signature rejected (401, nothing stored); valid signature stored as pending",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "WH-02",
+      "req": "B6",
+      "name": "Order webhook completes the matching checkout so no reminder is sent",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "WH-03",
+      "req": "B6",
+      "name": "Twilio inbound: unsigned/forged 403; signed STOP answered with an unsubscribe confirmation; START re-subscribes; 503 if not configured",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-01",
+      "req": "A4",
+      "name": "Launcher renders; opens; greeting + 6 quick-reply chips; NO session or AI request before the shopper types",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-02",
+      "req": "B2/B3",
+      "name": "Product page: greeting names the product; card shows price (cents→£), old price, spec chips and grade badge from the server",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-03",
+      "req": "B4",
+      "name": "Header cart panel: Add to cart updates the real cart, badge and confirmation; qty +/− and Remove work; event tracked",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-04",
+      "req": "B4",
+      "name": "Buy now adds the item then navigates to /checkout",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-05",
+      "req": "B4",
+      "name": "Cart add rejected by Shopify (422): shopper sees the reason; button usable again",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-06",
+      "req": "B2",
+      "name": "Several cards render as a swipeable carousel with counter and arrows; variant picker; sold-out variant disabled",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-07",
+      "req": "B4",
+      "name": "AI-triggered cart_action (add) executes the real cart call and shows confirmation",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-08",
+      "req": "NFR",
+      "name": "Security: HTML/script and javascript: links in AI text render inert",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-09",
+      "req": "NFR",
+      "name": "Errors are always friendly: network failure and HTTP 500 never show raw technical text; support link when configured",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-10",
+      "req": "NFR",
+      "name": "Server limits shown kindly: 429 \"please wait\", 503 \"very busy\"",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-11",
+      "req": "NFR",
+      "name": "Double-send while a reply is streaming is ignored (one API call)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-12",
+      "req": "C3/B7",
+      "name": "Curated FAQ chips (from the server) answer instantly with their source link and make no AI call",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-13",
+      "req": "A4",
+      "name": "Branding: accent colour, title and logo image avatar",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-14",
+      "req": "B5",
+      "name": "After the first laptop is added, popular add-ons appear once (carousel with Add to cart) and are not repeated",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-15",
+      "req": "C5/A5",
+      "name": "Contact form from the AI: prefilled; consent required; submits with token; confirmation replaces the form",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-16",
+      "req": "C5",
+      "name": "Out of hours: form and confirmation say the team is closed (with hours), never promise a quick reply",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-17",
+      "req": "C5",
+      "name": "Help panel has \"Talk to a person\" which opens the same form",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-18",
+      "req": "A4",
+      "name": "Conversation survives page navigation: transcript, cards, open state and session id restored; history continues",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-19",
+      "req": "A4",
+      "name": "Moving to a different product page adds a \"now viewing\" note with its card",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-20",
+      "req": "NFR",
+      "name": "Expired session token (401) is renewed automatically and the message is retried once",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-21",
+      "req": "A5",
+      "name": "Privacy line shows the retention period and privacy-policy link from the server config",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-23",
+      "req": "A4",
+      "name": "Prices show in pounds by default (£, UK number format) even when the page does not declare a currency",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "UI-24",
+      "req": "B4",
+      "name": "Cart not available on the page (e.g. localhost test page): clear explanation instead of a vague error",
+      "detail": ""
+    },
+    {
+      "status": "INFO",
+      "id": "UI-22",
+      "req": "A4",
+      "name": "Mobile layout, Safari/Firefox rendering, real Shopify theme conflicts, \"Download chat\" file save",
+      "detail": "NOT testable here (needs a real device/browser): see manual test cases"
+    },
+    {
+      "status": "PASS",
+      "id": "ADM-06",
+      "req": "A5",
+      "name": "Dashboard page works in a browser: overview cards, leads table, conversation transcript, tools",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "CLI-01",
+      "req": "NFR",
+      "name": "`npm run chat` (terminal test) completes a full session + chat flow and prints cards and the reply",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "CLI-02",
+      "req": "A2",
+      "name": "`npm run kb:build` builds the knowledge base from the website and reports unconfirmed FAQ entries",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "CLI-03",
+      "req": "B6",
+      "name": "`npm run webhooks:register` refuses to run without an https PUBLIC_BASE_URL",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "DEV-01",
+      "req": "NFR",
+      "name": "Simulated cart is OFF by default and refuses to run when NODE_ENV=production",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "DEV-02",
+      "req": "B4",
+      "name": "Simulated cart behaves like Shopify: add, merge, change quantity, sold-out 422, unknown 404, clear",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "DEV-03",
+      "req": "B4",
+      "name": "Each browser gets its own simulated cart (cookie)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "DEV-04",
+      "req": "B4",
+      "name": "Simulated product data matches Shopify's /products/<handle>.js format (prices in pence)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "DEV-05",
+      "req": "A4",
+      "name": "Simulated shop pages: index lists products, product page carries the widget with its handle (escaped), checkout lists the cart",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "id": "DEV-06",
+      "req": "B4",
+      "name": "END-TO-END on localhost: product page → chat greets with the product → Add to cart → quantity → Buy now hand-over, against the simulated store",
+      "detail": ""
+    },
+    {
+      "status": "INFO",
+      "id": "DEV-07",
+      "req": "B4",
+      "name": "Simulation vs reality",
+      "detail": "proves the widget logic end to end; does NOT prove Shopify accepts the requests. Still run the live-store test (tunnel + console snippet) before go-live"
+    },
+    {
+      "status": "GAP",
+      "id": "GAP-01",
+      "req": "C5",
+      "name": "Live agent inbox: real-time takeover of a chat by a human (spec: native hand-off when an agent is online)",
+      "detail": "not implemented"
+    },
+    {
+      "status": "INFO",
+      "id": "LIM-01",
+      "req": "NFR",
+      "name": "API protection",
+      "detail": "signed sessions + rate limits + daily cap deter casual abuse; this is not strong authentication (add Cloudflare Turnstile if abuse appears)"
+    },
+    {
+      "status": "INFO",
+      "id": "LIM-02",
+      "req": "NFR",
+      "name": "Multi-instance deployment",
+      "detail": "rate limits, daily cap and order lock-outs are in memory (single instance); use one instance or add Redis"
+    },
+    {
+      "status": "INFO",
+      "id": "LIM-03",
+      "req": "NFR",
+      "name": "Not verified against live services",
+      "detail": "Storefront-API mode, Dev Dashboard token request, Shopify webhook payload fields, Twilio/Resend delivery, Supabase, real store cart/checkout"
+    }
+  ]
+}

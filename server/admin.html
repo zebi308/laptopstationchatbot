@@ -1,0 +1,33 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Laptop Station chat: admin</title>
+<style>
+body{font:14px/1.45 system-ui,sans-serif;margin:0;background:#f5f6fa;color:#1c1d2b}header{background:#4545c4;color:#fff;padding:12px 20px;display:flex;gap:16px;align-items:center}
+header b{font-size:16px}nav button{background:transparent;border:0;color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font:inherit}nav button.on{background:rgba(255,255,255,.2)}
+main{max-width:1100px;margin:20px auto;padding:0 16px}.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.card{background:#fff;border:1px solid #e3e6f0;border-radius:12px;padding:14px}.card h3{margin:0;font-size:12px;color:#6a6f86;font-weight:600}.card p{margin:4px 0 0;font-size:24px;font-weight:700}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden}th,td{padding:8px 10px;border-bottom:1px solid #eef0f6;text-align:left;vertical-align:top}th{font-size:12px;color:#6a6f86}
+tr.click{cursor:pointer}tr.click:hover{background:#f5f6ff}.msg{padding:8px 12px;margin:6px 0;border-radius:10px;background:#fff;border:1px solid #e3e6f0;white-space:pre-wrap}.msg.user{background:#eef0ff}
+button.act{background:#4545c4;color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font:inherit}input{padding:8px;border:1px solid #cfd3e3;border-radius:8px;font:inherit}.muted{color:#6a6f86}.bar{display:flex;gap:4px;align-items:flex-end;height:60px}.bar i{flex:1;background:#4545c4;border-radius:3px 3px 0 0;min-height:2px}
+</style>
+<header><b>Laptop Station chat: admin</b><nav id="nav"></nav></header><main id="main"><p class="muted">Enter the admin token to continue.</p></main>
+<script>
+let T=sessionStorage.getItem('ls.admin')||'';const $=s=>document.querySelector(s),main=$('#main');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const api=async(p,o={})=>{const r=await fetch('/admin/api/'+p,{...o,headers:{Authorization:'Bearer '+T}});if(r.status===401){T='';sessionStorage.removeItem('ls.admin');login('Wrong token');throw 0}return r};
+const when=t=>new Date(t).toLocaleString('en-GB');
+function login(msg){$('#nav').innerHTML='';main.innerHTML=`<p>${msg||''}</p><input id="t" type="password" placeholder="Admin token"> <button class="act" id="go">Sign in</button>`;$('#go').onclick=()=>{T=$('#t').value;sessionStorage.setItem('ls.admin',T);start()}}
+const tabs={Overview:overview,Leads:leads,Conversations:convs,Tools:tools};
+function start(){const nav=$('#nav');nav.innerHTML='';for(const k in tabs){const b=document.createElement('button');b.textContent=k;b.onclick=()=>{[...nav.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');tabs[k]().catch(()=>{})};nav.append(b)}nav.firstChild.click()}
+async function overview(){const s=await(await api('stats')).json();const c=(h,v)=>`<div class="card"><h3>${h}</h3><p>${v}</p></div>`;const max=Math.max(1,...s.series.map(x=>x.conversations));
+main.innerHTML=`<div class="cards">${c('Conversations (7d)',s.conversations.last7d)}${c('Conversations (30d)',s.conversations.last30d)}${c('Messages',s.messages)}${c('Leads',s.leads.total)}${c('Out-of-hours leads',s.leads.outOfHours)}${c('Add to cart (chat)',s.events.addToCart)}${c('Buy now',s.events.buyNow)}${c('Add-ons added',s.events.addonAdded)}${c('KB chunks',s.kb.chunks)}${c('AI messages today',s.aiBudget.n+' / '+s.aiBudget.cap)}</div>
+<h3>Conversations per day (14 days)</h3><div class="card"><div class="bar">${s.series.map(x=>`<i title="${x.date}: ${x.conversations}" style="height:${x.conversations/max*100}%"></i>`).join('')}</div></div>
+<h3>Abandoned cart</h3><p class="muted">sent ${s.abandonedCart.sent} · skipped ${s.abandonedCart.skipped} · pending ${s.abandonedCart.pending} · completed ${s.abandonedCart.completed}</p>
+<h3>Recent server errors</h3>${s.errors.length?'<table>'+s.errors.map(e=>`<tr><td>${when(e.ts)}</td><td>${esc(e.where)}</td><td>${esc(e.message)}</td></tr>`).join('')+'</table>':'<p class="muted">None</p>'}`}
+async function leads(){const l=await(await api('leads')).json();main.innerHTML=`<p><button class="act" id="csv">Download CSV</button></p><table><tr><th>When</th><th>Type</th><th>Name</th><th>Email</th><th>Phone</th><th>Message</th><th>Hours</th></tr>${l.map(x=>`<tr><td>${when(x.ts)}</td><td>${esc(x.kind)}</td><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td>${esc(x.phone)}</td><td>${esc(x.message)}</td><td>${x.open===false?'out of hours':'open'}</td></tr>`).join('')||'<tr><td colspan=7 class="muted">No leads yet</td></tr>'}</table>`;
+$('#csv').onclick=async()=>{const b=await(await api('export.csv')).blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='leads.csv';a.click()}}
+async function convs(){const c=await(await api('conversations')).json();main.innerHTML=`<table><tr><th>Last message</th><th>Messages</th><th>Page</th><th>First question</th></tr>${c.map(x=>`<tr class="click" data-s="${esc(x.sessionId)}"><td>${when(x.last)}</td><td>${x.messages}</td><td>${esc(x.page)}</td><td>${esc(x.preview)}</td></tr>`).join('')||'<tr><td colspan=4 class="muted">No conversations yet</td></tr>'}</table>`;
+main.querySelectorAll('tr.click').forEach(r=>r.onclick=async()=>{const m=await(await api('conversations/'+r.dataset.s)).json();main.innerHTML=`<p><button class="act" id="back">Back</button></p>`+m.map(x=>`<div class="msg ${x.role}"><b>${x.role}</b> <span class="muted">${when(x.ts)}${x.tools?.length?' · tools: '+esc(x.tools.join(', ')):''}</span>\n${esc(x.content)}</div>`).join('');$('#back').onclick=convs})}
+async function tools(){main.innerHTML=`<h3>Knowledge base</h3><p><button class="act" id="kb">Re-crawl website now</button> <span id="kbo" class="muted"></span></p><h3>Delete a person's data (GDPR)</h3><p><input id="em" placeholder="email address"> <button class="act" id="del">Delete</button> <span id="delo" class="muted"></span></p>`;
+$('#kb').onclick=async()=>{$('#kbo').textContent='Working…';const r=await api('kb/refresh',{method:'POST'});$('#kbo').textContent=JSON.stringify(await r.json())};
+$('#del').onclick=async()=>{if(!confirm('Permanently delete data for this email?'))return;const r=await api('subject?email='+encodeURIComponent($('#em').value),{method:'DELETE'});$('#delo').textContent=JSON.stringify(await r.json())}}
+T?start():login();
+</script></html>
