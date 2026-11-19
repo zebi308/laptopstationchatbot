@@ -84,16 +84,26 @@ export function normalizeProduct(n) {
   }, { metafield: n.cond?.value });
 }
 
-async function sfSearch(q, limit = 5) {
-  const data = await storefront(`query($q: String!, $n: Int!) { products(first: $n, query: $q, sortKey: RELEVANCE) { nodes { ...P } } } ${fragment()}`, { q, n: Math.min(Math.max(limit, 1), 40) });
-  return data.products.nodes.map(normalizeProduct);
+async function sfSearch(q, limit = 5, f = {}) {
+  const run = async (qs, n) => (await storefront(`query($q: String!, $n: Int!) { products(first: $n, query: $q, sortKey: RELEVANCE) { nodes { ...P } } } ${fragment()}`, { q: qs, n })).products.nodes.map(normalizeProduct);
+  const clean = String(q || '').replace(/["():]/g, ' ').trim();
+  const parts = [clean];
+  if (Number.isFinite(f.maxPrice)) parts.push(`variants.price:<=${f.maxPrice}`);
+  if (Number.isFinite(f.minPrice)) parts.push(`variants.price:>=${f.minPrice}`);
+  if (f.inStock) parts.push('available_for_sale:true');
+  const filtered = parts.length > 1;
+  const n = Math.min(Math.max(filtered ? Math.max(limit, 100) : limit, 1), 100);
+  let out = [];
+  try { out = await run(parts.filter(Boolean).join(' '), n); } catch (e) { if (!filtered) throw e; }
+  if (!out.length && filtered) out = await run(clean, 100);
+  return out;
 }
 async function sfGet(handle) {
   const data = await storefront(`query($h: String!) { product(handle: $h) { ...P } } ${fragment()}`, { h: handle });
   return data.product ? normalizeProduct(data.product) : null;
 }
 const useStorefront = () => Boolean(env().SHOPIFY_STOREFRONT_TOKEN && env().SHOPIFY_STORE_DOMAIN);
-export const searchProducts = (q, limit) => (useStorefront() ? sfSearch(q, limit) : publicCatalog.searchProducts(q, limit));
+export const searchProducts = (q, limit, filters) => (useStorefront() ? sfSearch(q, limit, filters) : publicCatalog.searchProducts(q, limit));
 export const getProduct = (handle) => (useStorefront() ? sfGet(handle) : publicCatalog.getProduct(handle));
 
 export async function listAddonProducts() {
