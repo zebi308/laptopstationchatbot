@@ -153,6 +153,13 @@ mountAdmin(app, store, { refreshKb: () => (onVercel ? Promise.reject(new Error('
 mountAbandon(app, store);
 app.use((err, _req, res, _next) => { if (err.status >= 500 || !err.status) sec.logError('http', err); res.status(err.status || 500).json({ error: err.status === 413 ? 'Payload too large' : 'Bad request' }); });
 
+// ---- Diagnostics (needs ADMIN_TOKEN)
+app.get('/api/debug', async (req, res) => {
+  const t = process.env.ADMIN_TOKEN;
+  if (!t || req.headers.authorization !== `Bearer ${t}`) return res.status(401).json({ error: 'Unauthorized' });
+  const { catalogStatus } = await import('./public-catalog.js');
+  res.json({ storefrontTokenSet: Boolean(process.env.SHOPIFY_STOREFRONT_TOKEN), publicUrl: process.env.SHOPIFY_PUBLIC_URL || null, kb: kbStats(), catalogue: await catalogStatus(), recentErrors: sec.recentErrors() });
+});
 
 // ---- Vercel Cron (daily): retention + abandoned-cart sweep. Vercel sends Authorization: Bearer CRON_SECRET.
 app.get('/api/cron', async (req, res) => {

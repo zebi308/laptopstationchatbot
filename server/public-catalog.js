@@ -115,3 +115,19 @@ export async function getProduct(handle) {
 }
 
 export async function listProducts() { return (await load()).items.map((i) => i.p); }
+
+export async function catalogStatus() {
+  const out = { source: base() + '/products.json', ttlSeconds: ttl() / 1000 };
+  try {
+    const r = await fetch(`${base()}/products.json?limit=250&page=1`, { headers: { 'User-Agent': 'LaptopStationChat/1.0', Accept: 'application/json' }, signal: AbortSignal.timeout(10_000) });
+    out.httpStatus = r.status;
+    const j = await r.json().catch(() => null);
+    out.firstPageProducts = j && Array.isArray(j.products) ? j.products.length : null;
+    if (!r.ok) out.bodyStart = (await r.text().catch(() => '')).slice(0, 120);
+    const c = await load(true);
+    out.indexed = c.items.length;
+    out.asus = c.items.filter((i) => /asus/i.test(i.p.vendor + i.p.title)).length;
+    out.asusUnder600InStock = c.items.filter((i) => !i.p.isAddon && /asus/i.test(i.p.title + i.p.vendor) && i.p.variants.some((v) => v.available) && Math.min(...i.p.variants.map((v) => v.price)) <= 600).length;
+  } catch (e) { out.error = e.message; }
+  return out;
+}
