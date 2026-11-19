@@ -206,7 +206,7 @@
   // ---------- product card + carousel ----------
   function productCard(p) {
     let vi = Math.max(0, p.variants.findIndex((v) => v.available));
-    const price = h('div', { class: 'ls-price' }), stock = h('div', { class: 'ls-stock' }), cond = h('span', { class: 'ls-cond', hidden: true });
+    const price = h('div', { class: 'ls-price' }), stock = h('div', { class: 'ls-stock' }), cond = h('span', { class: 'ls-cond', hidden: true }), condParts = h('div', { class: 'ls-cond-parts', hidden: true });
     const add = h('button', { class: 'ls-btn ls-btn-o', type: 'button' }, 'Add to cart');
     const buy = h('button', { class: 'ls-btn ls-btn-f', type: 'button' }, 'Buy now');
     const select = p.variants.length > 1 ? h('select', { class: 'ls-select', 'aria-label': 'Variant', onchange: (e) => { vi = +e.target.value; upd(); } },
@@ -218,6 +218,8 @@
       stock.classList.toggle('ls-out', !v.available);
       const c = v.condition || (p.condition && p.condition.label) || '';
       cond.textContent = c; cond.hidden = !c;
+      const parts = (p.condition && p.condition.parts) || [];
+      condParts.textContent = parts.map((x) => `${x.label}: ${x.value}`).join(' · '); condParts.hidden = !parts.length;
       add.disabled = buy.disabled = !v.available;
     };
     add.addEventListener('click', () => doAdd(p, p.variants[vi], add));
@@ -227,7 +229,7 @@
     return h('article', { class: 'ls-card' },
       h('div', { class: 'ls-card-top' }, p.image ? h('img', { src: p.image, alt: '', loading: 'lazy' }) : null,
         h('div', { class: 'ls-card-info' },
-          h('strong', { class: 'ls-card-title' }, p.title), cond, price, stock,
+          h('strong', { class: 'ls-card-title' }, p.title), cond, condParts, price, stock,
           chips.length ? h('div', { class: 'ls-specs' }, chips.map((c) => h('span', { class: 'ls-spec' }, c))) : null,
           (p.highlights || []).length ? h('ul', {}, p.highlights.slice(0, chips.length ? 2 : 3).map((x) => h('li', {}, x))) : null,
           h('a', { class: 'ls-details', href: p.url, target: '_blank', rel: 'noopener' }, 'View details ↗'))),
@@ -449,6 +451,7 @@
 .ls-card-top{display:flex;gap:12px}.ls-card-top img{width:72px;height:72px;object-fit:contain;border-radius:12px;background:#f2f3f8;flex:none}
 .ls-card-info{min-width:0;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
 .ls-card-title{font-size:14.5px;line-height:1.25}
+.ls-cond-parts{font-size:11.5px;color:#5b6472;margin-top:3px;line-height:1.35}
 .ls-cond{background:#e6f4ec;color:#1b7a43;border-radius:8px;padding:1px 8px;font-size:11.5px;font-weight:600}
 .ls-price{font-weight:700}.ls-price del{color:#6a6f86;font-weight:600}.ls-price ins{text-decoration:none;color:var(--a)}
 .ls-stock{font-size:12.5px;font-weight:600;color:#1b7a43}.ls-stock.ls-out{color:#b3261e}

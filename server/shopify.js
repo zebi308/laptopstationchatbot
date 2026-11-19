@@ -47,6 +47,13 @@ export async function adminQuery(query, variables) {
 }
 
 // ---- Storefront product queries
+// CONDITION_FIELDS="Overall=custom.condition;Screen=custom.screen_condition;Lid=custom.lid_condition" (label=namespace.key, ';' separated).
+// A field labelled Overall (or Condition) becomes the headline condition; the rest are shown as parts. Each must be exposed to the Storefront API.
+const condFields = () => str('CONDITION_FIELDS').split(';').map((x) => x.trim()).filter((x) => x.includes('=')).map((x) => {
+  const [label, ref] = x.split('='); const [ns, key] = (ref || '').trim().split('.');
+  return ns && key ? { label: label.trim(), ns: ns.replace(/[^\w-]/g, ''), key: key.replace(/[^\w-]/g, '') } : null;
+}).filter(Boolean);
+const condSelect = () => condFields().map((f, i) => `cf${i}: metafield(namespace: "${f.ns}", key: "${f.key}") { value }`).join('\n  ');
 const metaCond = () => {
   const m = str('CONDITION_METAFIELD'); // e.g. custom.condition (must be exposed to the Storefront API)
   if (!m.includes('.')) return '';
@@ -59,6 +66,7 @@ fragment P on Product {
   options { name values }
   featuredImage { url }
   ${metaCond()}
+  ${condSelect()}
   variants(first: 30) { nodes {
     id title availableForSale ${env().SHOPIFY_INVENTORY_QTY === '1' ? 'quantityAvailable' : ''}
     selectedOptions { name value }
@@ -77,11 +85,16 @@ export function normalizeProduct(n) {
     available: v.availableForSale, quantity: v.quantityAvailable ?? null,
     condition: (v.selectedOptions || []).find((o) => /condition|grade/i.test(o.name))?.value || null,
   }));
-  return enrich({
+  const details = condFields().map((f, i) => ({ label: f.label, value: String(n[`cf${i}`]?.value || '').trim() })).filter((d) => d.value);
+  const overall = details.find((d) => /^(overall|condition|grade)$/i.test(d.label));
+  const parts = details.filter((d) => d !== overall);
+  const product = enrich({
     handle: n.handle, title: n.title, url: `/products/${n.handle}`, image: n.featuredImage?.url || '', vendor: n.vendor, type: n.productType,
     tags: n.tags || [], description: (n.description || '').slice(0, 600), highlights: highlights(n.description),
     currency: n.variants.nodes[0]?.price.currencyCode || str('STORE_CURRENCY', 'GBP'), variants,
-  }, { metafield: n.cond?.value });
+  }, { metafield: overall?.value || n.cond?.value });
+  if (parts.length || overall) product.condition = { ...(product.condition || { label: overall?.value }), parts };
+  return product;
 }
 
 async function sfSearch(q, limit = 5, f = {}) {
@@ -95,6 +108,7 @@ async function sfSearch(q, limit = 5, f = {}) {
   const n = Math.min(Math.max(filtered ? Math.max(limit, 100) : limit, 1), 100);
   let out = [];
   try { out = await run(parts.filter(Boolean).join(' '), n); } catch (e) { if (!filtered) throw e; }
+  // If Shopify's filter syntax returned nothing, fall back to a wider plain search; tools.js filters the rest locally.
   if (!out.length && filtered) out = await run(clean, 100);
   return out;
 }

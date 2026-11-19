@@ -61,7 +61,7 @@ export const STATUS = {
 
 const forModel = (p) => ({
   handle: p.handle, title: p.title, vendor: p.vendor, type: p.type, description: p.description,
-  condition: p.condition?.label, specs: p.specs && { cpu: p.specs.cpu, ram_gb: p.specs.ramGb, storage: p.specs.storageText, screen_in: p.specs.screenIn, os: p.specs.os },
+  condition: p.condition?.label, condition_parts: p.condition?.parts?.length ? p.condition.parts : undefined, specs: p.specs && { cpu: p.specs.cpu, ram_gb: p.specs.ramGb, storage: p.specs.storageText, screen_in: p.specs.screenIn, os: p.specs.os },
   is_addon: p.isAddon || undefined, stock_note: p.stockNote || undefined, currency: p.currency,
   variants: p.variants.map((v) => ({ variant_id: v.id, title: v.title, price: v.price, compare_at: v.compareAt, available: v.available, quantity: v.quantity, condition: v.condition || undefined })),
 });
@@ -92,7 +92,7 @@ export async function runTool(name, input, ctx) {
         if (typeof input.min_screen_in === 'number') items = items.filter((p) => (sp(p, 'screenIn') ?? -1) >= input.min_screen_in);
         if (typeof input.max_screen_in === 'number') items = items.filter((p) => (sp(p, 'screenIn') ?? 99) <= input.max_screen_in);
         if (input.os) items = items.filter((p) => (sp(p, 'os') || '').toLowerCase().includes(String(input.os).toLowerCase()));
-        if (input.condition) { const c = String(input.condition).toLowerCase(); items = items.filter((p) => (p.condition?.label || '').toLowerCase().includes(c) || p.variants.some((v) => (v.condition || '').toLowerCase().includes(c))); }
+        if (input.condition) { const c = String(input.condition).toLowerCase(); items = items.filter((p) => (p.condition?.label || '').toLowerCase().includes(c) || (p.condition?.parts || []).some((x) => `${x.label} ${x.value}`.toLowerCase().includes(c)) || p.variants.some((v) => (v.condition || '').toLowerCase().includes(c))); }
         if (input.in_stock_only !== false) items = items.filter((p) => p.variants.some((v) => v.available));
         if (input.sort === 'price_asc') items.sort((a, b) => low(a) - low(b));
         if (input.sort === 'price_desc') items.sort((a, b) => low(b) - low(a));
