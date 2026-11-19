@@ -21,12 +21,14 @@ export async function conversations(store) {
 }
 
 export async function stats(store, now = Date.now()) {
+  const handoffs = await store.all('handoffs');
   const convs = await conversations(store), leads = await store.all('leads'), events = await store.all('events'), checkouts = await store.all('checkouts');
   const day = 86_400_000, since = (d) => now - d * day;
   const series = Array.from({ length: 14 }, (_, i) => { const t = new Date(now - (13 - i) * day).toISOString().slice(0, 10); return { date: t, conversations: convs.filter((c) => new Date(c.first).toISOString().slice(0, 10) === t).length }; });
   const count = (name) => events.filter((e) => e.name === name).length;
   return {
     conversations: { total: convs.length, last7d: convs.filter((c) => c.first >= since(7)).length, last30d: convs.filter((c) => c.first >= since(30)).length },
+    liveChats: { total: handoffs.length, answered: handoffs.filter((x) => x.joinedAt).length, missed: handoffs.filter((x) => x.status === 'timeout').length, cancelled: handoffs.filter((x) => x.status === 'cancelled').length },
     messages: convs.reduce((a, c) => a + c.messages, 0), toolCalls: convs.reduce((a, c) => a + c.tools, 0),
     leads: { total: leads.length, human: leads.filter((l) => l.kind === 'human').length, enquiry: leads.filter((l) => l.kind === 'enquiry').length, outOfHours: leads.filter((l) => l.open === false).length },
     events: { addToCart: count('add_to_cart'), buyNow: count('buy_now'), checkoutClick: count('checkout_click'), addonAdded: count('addon_add') },
@@ -48,6 +50,8 @@ export function mountAdmin(app, store, { refreshKb }) {
   app.get('/admin/api/leads', async (_req, res) => res.json((await store.all('leads')).sort((a, b) => b.ts - a.ts).slice(0, 500)));
   app.get('/admin/api/conversations', async (_req, res) => res.json((await conversations(store)).slice(0, 200)));
   app.get('/admin/api/conversations/:sid', async (req, res) => res.json((await store.all('messages')).filter((m) => m.sessionId === req.params.sid).sort((a, b) => a.ts - b.ts)));
+  app.get('/admin/api/handoffs', async (_req, res) => res.json((await store.all('handoffs')).sort((a, b) => b.ts - a.ts).slice(0, 200)));
+  app.get('/admin/api/handoffs/:id', async (req, res) => res.json((await store.find('handoff_msgs', 'handoffId', req.params.id)).sort((a, b) => a.ts - b.ts)));
   app.get('/admin/api/export.csv', async (_req, res) => {
     const rows = (await store.all('leads')).sort((a, b) => b.ts - a.ts), cols = ['ts', 'kind', 'name', 'email', 'phone', 'message', 'page', 'open', 'consent'];
     res.type('text/csv').send([cols.join(','), ...rows.map((r) => cols.map((c) => csvCell(c === 'ts' ? new Date(r.ts).toISOString() : r[c])).join(','))].join('\n'));

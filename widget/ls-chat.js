@@ -24,10 +24,10 @@
   const KEY = 'ls.v1';
   const SS = { get: (k) => { try { return sessionStorage.getItem(k); } catch (_) { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch (_) { /* private mode */ } } };
 
-  const state = { view: 'chat', busy: false, opened: false, cart: null, product: null, log: [], ui: [], token: '', tokenExp: 0, sessionId: '', config: {}, addonsShown: false, addonsBusy: false, sessionP: null };
+  const state = { view: 'chat', busy: false, opened: false, cart: null, product: null, log: [], ui: [], token: '', tokenExp: 0, sessionId: '', config: {}, addonsShown: false, addonsBusy: false, sessionP: null, live: null };
   let saved = null;
   try { saved = JSON.parse(SS.get(KEY) || 'null'); } catch (_) { saved = null; }
-  if (saved) { state.sessionId = saved.sid || ''; state.log = saved.log || []; state.ui = saved.ui || []; state.addonsShown = Boolean(saved.addons); }
+  if (saved) { state.sessionId = saved.sid || ''; state.liveSaved = saved.live || null; state.log = saved.log || []; state.ui = saved.ui || []; state.addonsShown = Boolean(saved.addons); }
 
   // ---------- helpers ----------
   const h = (tag, props = {}, ...kids) => {
@@ -131,8 +131,9 @@
   const cartBtn = h('button', { class: 'ls-hbtn', type: 'button', title: 'Cart', 'aria-label': 'Open cart', onclick: () => setView(state.view === 'cart' ? 'chat' : 'cart') }, ico('cart'), badge);
   const fullBtn = h('button', { class: 'ls-hbtn ls-fullbtn', type: 'button', title: 'Full screen', 'aria-label': 'Toggle full screen', onclick: () => win.classList.toggle('ls-full') }, ico('full'));
   const closeBtn = h('button', { class: 'ls-hbtn', type: 'button', title: 'Minimise', 'aria-label': 'Minimise chat', onclick: () => toggle(false) }, ico('close'));
+  const hText = document.createTextNode('AI assistant available');
   const header = h('header', { class: 'ls-header' }, avatar('ls-avatar'),
-    h('div', { class: 'ls-hcopy' }, h('strong', {}, CFG.title), h('small', {}, h('i', { class: 'ls-dot' }), 'AI assistant available')), cartBtn, fullBtn, closeBtn);
+    h('div', { class: 'ls-hcopy' }, h('strong', {}, CFG.title), h('small', {}, h('i', { class: 'ls-dot' }), hText)), cartBtn, fullBtn, closeBtn);
   const tools = h('nav', { class: 'ls-tools' },
     h('button', { type: 'button', onclick: () => setView(state.view === 'help' ? 'chat' : 'help') }, 'Help & FAQs'),
     h('button', { type: 'button', onclick: () => download() }, 'Download chat'));
@@ -142,8 +143,10 @@
   const input = h('textarea', { rows: 1, placeholder: CFG.placeholder, maxlength: 1000, 'aria-label': 'Message' });
   const form = h('form', { class: 'ls-form', onsubmit: (e) => { e.preventDefault(); const t = input.value.trim(); input.value = ''; autosize(); send(t); } },
     input, h('button', { class: 'ls-send', type: 'submit', 'aria-label': 'Send' }, ico('send')));
+  const liveBar = h('div', { class: 'ls-live', hidden: true });
+  const liveActions = h('div', { class: 'ls-actions', hidden: true });
   const privacyEl = h('p', { class: 'ls-privacy' }, CFG.privacy);
-  const win = h('section', { class: 'ls-window', hidden: true, 'aria-label': CFG.title }, header, tools, h('div', { class: 'ls-body' }, msgs, helpPanel, cartPanel), form, privacyEl);
+  const win = h('section', { class: 'ls-window', hidden: true, 'aria-label': CFG.title }, header, tools, liveBar, h('div', { class: 'ls-body' }, msgs, helpPanel, cartPanel), liveActions, form, privacyEl);
   root.append(launcher, win);
 
   const autosize = () => { input.style.height = 'auto'; input.style.height = `${Math.min(input.scrollHeight, 110)}px`; };
@@ -152,7 +155,7 @@
   const renderBadge = () => { const n = state.cart ? state.cart.item_count : 0; badge.textContent = n; badge.hidden = !n; };
   const scroll = () => { msgs.scrollTop = msgs.scrollHeight; };
   const persist = () => {
-    SS.set(KEY, JSON.stringify({ sid: state.sessionId, log: state.log.slice(-16), addons: state.addonsShown, open: !win.hidden, handle: CFG.handle,
+    SS.set(KEY, JSON.stringify({ sid: state.sessionId, log: state.log.slice(-16), addons: state.addonsShown, open: !win.hidden, live: state.live && { id: state.live.id, after: state.live.after, seen: [...state.live.seen].slice(-20) }, handle: CFG.handle,
       ui: state.ui.slice(-40).map((u) => (u.t === 'cards' ? { t: 'cards', products: u.products.map(({ description, ...p }) => p) } : u)) }));
   };
   const pushUi = (e) => { state.ui.push(e); persist(); };
@@ -163,7 +166,7 @@
     if (v === 'cart') { renderCart(); refreshCart().catch(() => {}); }
   }
   function toggle(open) {
-    win.hidden = !open; launcher.hidden = open;
+    win.hidden = !open; launcher.hidden = open; if (open) launcher.classList.remove('ls-ping');
     if (open && !state.opened) { state.opened = true; greet(); }
     if (open) setTimeout(() => input.focus(), 50);
     persist();
@@ -209,7 +212,7 @@
   }
   function renderHelp() {
     helpPanel.replaceChildren(h('h4', {}, 'Help & FAQs'), ...faqs().map((f) => h('button', { class: 'ls-faq', type: 'button', onclick: () => faq(f) }, f.q)),
-      h('button', { class: 'ls-btn ls-btn-f', type: 'button', onclick: () => { setView('chat'); showForm({ kind: 'human', reason: '' }); } }, 'Talk to a person'),
+      h('button', { class: 'ls-btn ls-btn-f', type: 'button', onclick: () => { setView('chat'); if (state.config.live && state.config.live.available && !state.live) startLive(); else showForm({ kind: 'human', reason: '' }); } }, 'Talk to a person'),
       (CFG.support || state.config.supportUrl) ? h('a', { class: 'ls-btn ls-btn-o', href: CFG.support || state.config.supportUrl, target: '_blank', rel: 'noopener' }, 'Message us on WhatsApp / contact page') : null);
   }
   function download() {
@@ -370,6 +373,7 @@
   const userError = (m) => Object.assign(new Error(m), { user: true });
 
   async function send(text) {
+    if (state.live && text) return liveSend(text);
     if (state.busy || !text) return;
     state.busy = true; setView('chat');
     msgs.querySelector('.ls-chips')?.remove();
@@ -383,7 +387,7 @@
       if (ev.type === 'status') typing.dataset.s = ev.text;
       else if (ev.type === 'text') { typing.remove(); if (!cur) { cur = bubble(col, ''); acc = ''; } acc += ev.text; all += ev.text; cur.innerHTML = md(acc); scroll(); }
       else if (ev.type === 'cards') { typing.remove(); flush(); renderCards(col, ev.products); pushUi({ t: 'cards', products: ev.products }); scroll(); }
-      else if (ev.type === 'form') { typing.remove(); flush(); renderForm(col, ev); }
+      else if (ev.type === 'form') { typing.remove(); flush(); if (ev.kind !== 'enquiry' && state.config.live && state.config.live.available && !state.live) renderLiveOffer(col, ev); else renderForm(col, ev); }
       else if (ev.type === 'action') {
         flush();
         const v = { id: ev.variantId, qty: ev.quantity, title: '' };
@@ -419,6 +423,114 @@
     }
   }
 
+
+  // ---------- live chat with the team (Slack) ----------
+  const sysMsg = (text) => { msgs.append(h('div', { class: 'ls-sys' }, text)); scroll(); };
+  function agentMsg(text, name = 'Laptop Station team') {
+    const col = h('div', { class: 'ls-col' }), b = h('div', { class: 'ls-bubble ls-agent' });
+    b.innerHTML = md(text);
+    col.append(h('small', { class: 'ls-agent-name' }, `${name} · Laptop Station team`), b);
+    msgs.append(h('div', { class: 'ls-m ls-bot' }, h('div', { class: 'ls-mini ls-agentav' }, (name || 'T')[0].toUpperCase()), col)); scroll();
+  }
+  let waitEl = null;
+  const showWait = (on) => {
+    if (on && !waitEl) { waitEl = h('div', { class: 'ls-m ls-bot' }, avatar('ls-mini'), h('div', { class: 'ls-col' }, h('div', { class: 'ls-bubble ls-typing' }, h('i'), h('i'), h('i')))); msgs.append(waitEl); scroll(); }
+    if (!on && waitEl) { waitEl.remove(); waitEl = null; }
+  };
+  function renderLiveBar() {
+    const c = state.config.live;
+    liveBar.replaceChildren();
+    if (!c || !c.enabled || state.live) { liveBar.hidden = true; return; }
+    const on = c.available, hrs = state.config.hoursText;
+    liveBar.append(h('div', { class: `ls-live-ic${on ? '' : ' ls-off'}` }, ico('chat'), h('i')),
+      h('div', { class: 'ls-live-t' }, h('strong', {}, on ? 'Live Chat' : 'Live chat is closed'), h('small', {}, on ? 'Chat with our team' : (hrs ? `Hours: ${hrs}. Email us any time.` : 'Email us and we’ll reply soon.'))),
+      h('button', { type: 'button', onclick: () => { setView('chat'); on ? startLive() : showForm({ kind: 'human', reason: '' }); } }, on ? 'Chat' : 'Email us'));
+    liveBar.hidden = false;
+  }
+  function liveSetActions(mode) {
+    liveActions.replaceChildren();
+    if (mode === 'wait') liveActions.append(
+      h('button', { type: 'button', class: 'ls-danger', onclick: () => liveCancel(false) }, 'Cancel Handoff Request'),
+      h('button', { type: 'button', onclick: () => liveCancel(true) }, 'Send an Email'));
+    else if (mode === 'chat') liveActions.append(h('button', { type: 'button', class: 'ls-danger', onclick: liveEnd }, 'End live chat'));
+    liveActions.hidden = !mode; input.placeholder = mode ? 'Message the team…' : CFG.placeholder;
+    renderLiveBar();
+  }
+  function renderLiveOffer(col, ev) {
+    col.append(h('div', { class: 'ls-added' }, h('strong', {}, 'Our team is online'), h('p', { class: 'ls-muted' }, 'Chat live with a person now, or leave your details for an email reply.'),
+      h('div', { class: 'ls-row' }, h('button', { class: 'ls-btn ls-btn-f', type: 'button', onclick: startLive }, 'Chat live'), h('button', { class: 'ls-btn ls-btn-o', type: 'button', onclick: () => showForm(ev) }, 'Email instead'))));
+    scroll();
+  }
+  async function startLive() {
+    if (state.live) return;
+    setView('chat'); msgs.querySelector('.ls-chips')?.remove();
+    try {
+      const r = await apiFetch('/api/handoff/start', { body: { page: location.pathname } });
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 409) { fetch(`${API}/api/config`).then((x) => x.json()).then((c) => { state.config = c; applyConfig(); }).catch(() => {}); bot('Live chat has just closed for the day. Leave your details and we’ll reply by email.'); showForm({ kind: 'human', reason: '' }); return; }
+      if (!r.ok) throw new Error('start');
+      state.live = { id: j.id, status: 'waiting', after: 0, seen: new Set(), fails: 0, timer: null };
+      const t = 'Please wait, we’re notifying the team…';
+      sysMsg(t); pushUi({ t: 'sys', text: t }); showWait(true); liveSetActions('wait'); hText.data = 'Contacting the team…'; persist(); pollLive();
+    } catch (_) {
+      bot('Sorry, we couldn’t reach the team just now. Leave your details and we’ll reply by email.'); showForm({ kind: 'human', reason: '' });
+    }
+  }
+  function endLive() {
+    const L = state.live; if (L) clearTimeout(L.timer);
+    state.live = null; showWait(false); hText.data = 'AI assistant available'; liveSetActions(null); persist();
+  }
+  async function liveSend(text) {
+    const L = state.live; if (!L) return;
+    userMsg(text); pushUi({ t: 'user', text });
+    try {
+      const r = await apiFetch(`/api/handoff/${L.id}/message`, { body: { text } });
+      if (r.status === 409 || r.status === 404) { endLive(); bot('That live chat has ended. You’re back with the AI assistant. Ask me anything, or tap Talk to a person to start again.'); }
+      else if (!r.ok) sysMsg('That message didn’t send. Please try again.');
+    } catch (_) { sysMsg('That message didn’t send. Please try again.'); }
+  }
+  async function liveCancel(thenEmail) {
+    const L = state.live; if (!L) return;
+    apiFetch(`/api/handoff/${L.id}/cancel`, { body: {} }).catch(() => {});
+    const t = 'Live chat request cancelled.'; sysMsg(t); pushUi({ t: 'sys', text: t }); endLive();
+    if (thenEmail) showForm({ kind: 'human', reason: '' });
+  }
+  async function liveEnd() {
+    const L = state.live; if (!L) return;
+    apiFetch(`/api/handoff/${L.id}/end`, { body: {} }).catch(() => {});
+    const t = 'You ended the live chat. You’re back with the AI assistant.'; sysMsg(t); pushUi({ t: 'sys', text: t }); endLive();
+  }
+  function pollLive(delay) {
+    const L = state.live; if (!L) return;
+    clearTimeout(L.timer);
+    L.timer = setTimeout(async () => {
+      if (state.live !== L) return;
+      try {
+        const r = await apiFetch(`/api/handoff/${L.id}/poll?after=${L.after}`, { method: 'GET' });
+        if (r.status === 404) { endLive(); return; }
+        if (!r.ok) throw new Error('poll');
+        const j = await r.json(); L.fails = 0;
+        for (const m of j.messages) {
+          if (L.seen.has(m.id)) continue;
+          L.seen.add(m.id); L.after = Math.max(L.after, m.ts);
+          if (m.from === 'visitor') continue; // already shown when sent
+          showWait(false);
+          if (m.from === 'agent') { agentMsg(m.text, m.agent); pushUi({ t: 'agent', text: m.text, name: m.agent }); }
+          else { sysMsg(m.text); pushUi({ t: 'sys', text: m.text }); }
+          if (win.hidden && m.from === 'agent') launcher.classList.add('ls-ping'); // pulse the bubble when the chat is minimised
+        }
+        if (j.status !== L.status) {
+          L.status = j.status;
+          if (j.status === 'active') { showWait(false); liveSetActions('chat'); hText.data = `Chatting with ${j.agent || 'our team'}`; }
+          else if (j.status === 'waiting') { showWait(true); liveSetActions('wait'); hText.data = 'Contacting the team…'; }
+          else if (j.status === 'timeout') { endLive(); bot('Sorry, nobody is available to chat right now. Leave your details and we’ll reply by email.'); showForm({ kind: 'human', reason: '' }); return; }
+          else { endLive(); return; } // ended / cancelled
+        }
+        persist(); pollLive();
+      } catch (_) { if (++L.fails >= 6) { endLive(); bot('We lost the connection to the live chat. Leave your details and we’ll reply by email.'); showForm({ kind: 'human', reason: '' }); } else pollLive(); }
+    }, delay != null ? delay : (document.hidden ? 5000 : 2000));
+  }
+
   // ---------- styles ----------
   const CSS = `
 .ls-chat,.ls-chat *{box-sizing:border-box}
@@ -441,6 +553,23 @@
 .ls-hbtn:hover{background:rgba(255,255,255,.16)}
 .ls-ico{display:inline-grid;place-items:center}
 .ls-badge{position:absolute;top:0;right:0;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#fff;color:var(--a);font-size:11px;font-weight:700;display:grid;place-items:center}
+.ls-launcher.ls-ping{animation:ls-pulse 1.3s infinite}
+@keyframes ls-pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.65)}100%{box-shadow:0 0 0 20px rgba(34,197,94,0)}}
+.ls-live{display:flex;align-items:center;gap:10px;margin:10px 14px 0;padding:9px 12px;border:1px solid #e3e6f0;border-radius:14px;background:#fff;flex:none}
+.ls-live[hidden],.ls-actions[hidden]{display:none}
+.ls-live-ic{position:relative;width:38px;height:38px;border-radius:50%;background:#eef0fb;color:var(--a);display:grid;place-items:center;flex:none}
+.ls-live-ic svg{width:20px;height:20px}
+.ls-live-ic i{position:absolute;right:0;bottom:0;width:11px;height:11px;border-radius:50%;background:#22c55e;border:2px solid #fff}
+.ls-live-ic.ls-off i{background:#9ca3af}
+.ls-live-t{flex:1;min-width:0;line-height:1.25}.ls-live-t strong{display:block;font-size:14px}.ls-live-t small{color:#6b7280;font-size:12.5px}
+.ls-live>button{border:0;background:var(--a);color:#fff;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13.5px}
+.ls-actions{display:flex;gap:8px;padding:8px 14px;background:#fff;border-top:1px solid #eceef5;flex:none}
+.ls-actions button{flex:1;border-radius:10px;padding:9px 8px;font-weight:700;font-size:13px;border:1.5px solid var(--a);background:#fff;color:var(--a)}
+.ls-actions .ls-danger{border-color:#e0556b;color:#c8344d;background:#fff5f6}
+.ls-sys{align-self:center;background:#e9ebf3;color:#4b5263;font-size:12.5px;border-radius:999px;padding:5px 12px;text-align:center;max-width:92%}
+.ls-agent-name{font-size:11.5px;color:#6b7280;margin-left:4px}
+.ls-bubble.ls-agent{background:#ecfdf3;border-color:#bfe9cf}
+.ls-mini.ls-agentav{background:#16a34a;display:grid;place-items:center;font-weight:700;border-radius:50%}
 .ls-tools{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid #eceef5;flex:none;background:#fff}
 .ls-tools button{border:1px solid #dfe2ee;background:#fff;border-radius:10px;padding:6px 12px;font-size:13.5px}.ls-tools button:hover{border-color:var(--a)}
 .ls-body{position:relative;flex:1;min-height:0;background:#f5f6fa}
@@ -524,6 +653,7 @@
     privacyEl.replaceChildren(bits.join(''), c.privacyUrl ? h('span', {}, [' ', h('a', { href: c.privacyUrl, target: '_blank', rel: 'noopener' }, 'Privacy policy')]) : '');
     root.querySelectorAll('.ls-avatar,.ls-mini').forEach(fillAvatar);
     if (state.opened && !msgs.querySelector('.ls-user') && msgs.querySelector('.ls-chips')) renderChips();
+    renderLiveBar();
   }
   function restore() {
     let col = null;
@@ -532,6 +662,8 @@
       else if (u.t === 'bot') { col ??= botGroup(); bubble(col, u.text); }
       else if (u.t === 'cards') { col ??= botGroup(); renderCards(col, u.products); }
       else if (u.t === 'added') { renderAdded(u.title); col = null; }
+      else if (u.t === 'sys') { sysMsg(u.text); col = null; }
+      else if (u.t === 'agent') { agentMsg(u.text, u.name); col = null; }
     }
     if (!state.ui.some((u) => u.t === 'user')) renderChips();
   }
@@ -547,7 +679,12 @@
       if (saved.open) toggle(true);
     } else if (saved && saved.open) toggle(true);
     cartGet().then((c) => { state.cart = c; renderBadge(); }).catch(() => {});
-    fetch(`${API}/api/config`).then((r) => (r.ok ? r.json() : {})).then((c) => { state.config = c; applyConfig(); }).catch(() => {});
+    const loadConfig = () => fetch(`${API}/api/config`).then((r) => (r.ok ? r.json() : null)).then((c) => { if (c) { state.config = c; applyConfig(); } }).catch(() => {});
+    await loadConfig(); setInterval(loadConfig, 300_000); // keeps the Live Chat card right as opening hours start and end
+    if (state.liveSaved && state.liveSaved.id) { // resume a live chat after a page change or refresh
+      state.live = { id: state.liveSaved.id, status: 'resume', after: state.liveSaved.after || 0, seen: new Set(state.liveSaved.seen || []), fails: 0, timer: null };
+      liveSetActions('wait'); pollLive(0);
+    }
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   window.LSChat = { open: () => toggle(true), close: () => toggle(false), send };

@@ -22,13 +22,18 @@ export class FileStore {
   }
   async add(c, rec) { const r = { id: crypto.randomUUID(), ts: Date.now(), ...rec }; this._load(c).push(r); this._save(c); return r; }
   async all(c) { return [...this._load(c)]; }
+  async get(c, id) { return this._load(c).find((x) => x.id === id) || null; }
+  async find(c, key, value) { return this._load(c).filter((x) => x[key] === value); } // key must be a plain field name
   async update(c, id, patch) { const r = this._load(c).find((x) => x.id === id); if (!r) return null; Object.assign(r, patch); this._save(c); return r; }
   async removeWhere(c, pred) { const a = this._load(c); const keep = a.filter((x) => !pred(x)); const n = a.length - keep.length; this.data[c] = keep; if (n) this._save(c); return n; }
 }
 
 export class SupabaseStore {
   constructor(url, key) { this.url = `${url.replace(/\/$/, '')}/rest/v1/ls_records`; this.key = key; }
-  h(extra = {}) { return { apikey: this.key, Authorization: `Bearer ${this.key}`, 'Content-Type': 'application/json', ...extra }; }
+  h(extra = {}) { // legacy service_role keys are JWTs (send as Bearer too); new sb_secret_ keys go in apikey only
+    return { apikey: this.key, ...(this.key.startsWith('sb_') ? {} : { Authorization: `Bearer ${this.key}` }), 'Content-Type': 'application/json', ...extra };
+  }
+  _row(x) { return { id: x.id, ts: Number(x.ts), ...x.data }; }
   async _req(url, opts) { const r = await fetch(url, { ...opts, signal: AbortSignal.timeout(10_000) }); if (!r.ok) throw new Error(`Supabase ${r.status}`); return r; }
   async add(c, rec) { const id = crypto.randomUUID(), ts = Date.now(); await this._req(this.url, { method: 'POST', headers: this.h({ Prefer: 'return=minimal' }), body: JSON.stringify({ id, collection: c, ts, data: rec }) }); return { id, ts, ...rec }; }
   async all(c) {
@@ -40,8 +45,18 @@ export class SupabaseStore {
     }
     return out;
   }
+  async get(c, id) {
+    if (!/^[0-9a-f-]{36}$/i.test(String(id))) return null;
+    const rows = await (await this._req(`${this.url}?collection=eq.${encodeURIComponent(c)}&id=eq.${id}&select=id,ts,data`, { headers: this.h() })).json();
+    return rows[0] ? this._row(rows[0]) : null;
+  }
+  async find(c, key, value) { // indexed lookup on one field of the JSON data
+    if (!/^\w+$/.test(key)) throw new Error('bad key');
+    const rows = await (await this._req(`${this.url}?collection=eq.${encodeURIComponent(c)}&data-%3E%3E${key}=eq.${encodeURIComponent(value)}&select=id,ts,data&order=ts.asc&limit=1000`, { headers: this.h() })).json();
+    return rows.map((x) => this._row(x));
+  }
   async update(c, id, patch) {
-    const cur = (await this.all(c)).find((x) => x.id === id); if (!cur) return null;
+    const cur = await this.get(c, id); if (!cur) return null;
     const { id: _i, ts: _t, ...data } = { ...cur, ...patch };
     await this._req(`${this.url}?id=eq.${id}`, { method: 'PATCH', headers: this.h({ Prefer: 'return=minimal' }), body: JSON.stringify({ data }) });
     return { ...cur, ...patch };
@@ -64,6 +79,8 @@ export async function runRetention(store, now = Date.now()) {
   out.messages = await store.removeWhere('messages', (r) => now - r.ts > num('RETENTION_DAYS', 90) * day);
   out.events = await store.removeWhere('events', (r) => now - r.ts > num('RETENTION_DAYS', 90) * day);
   out.leads = await store.removeWhere('leads', (r) => now - r.ts > num('LEAD_RETENTION_DAYS', 365) * day);
+  out.handoffs = await store.removeWhere('handoffs', (r) => now - r.ts > num('RETENTION_DAYS', 90) * day);
+  out.handoffMessages = await store.removeWhere('handoff_msgs', (r) => now - r.ts > num('RETENTION_DAYS', 90) * day);
   out.checkouts = await store.removeWhere('checkouts', (r) => now - r.ts > 30 * day);
   return out;
 }

@@ -16,12 +16,13 @@ import { mountAdmin } from './admin.js';
 import { mountAbandon } from './abandon.js';
 import { getAddons, getProduct } from './shopify.js';
 import { mountDevCart } from './devcart.js';
+import { mountLive, liveStatus } from './live.js';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const app = express();
 app.set('trust proxy', 1);
 app.use('/webhooks', express.raw({ type: '*/*', limit: '1mb' })); // raw body needed for signature checks
-app.use(express.json({ limit: '64kb' }));
+app.use(express.json({ limit: '64kb', verify: (req, _res, buf) => { if (req.url.startsWith('/api/slack')) req.rawBody = buf; } })); // raw body kept for Slack signature checks
 app.get('/widget/:file', (req, res) => { // explicit route: express.static is ignored on Vercel
   const f = String(req.params.file);
   if (!/^[\w.-]+\.(js|html|css)$/.test(f)) return res.status(404).end();
@@ -68,7 +69,7 @@ app.post('/api/session', (req, res) => {
 
 app.get('/api/config', (_req, res) => {
   const h = hoursStatus();
-  res.json({ open: h.open, hoursConfigured: h.configured, hoursText: str('SUPPORT_HOURS_TEXT'), retentionDays: num('RETENTION_DAYS', 90), privacyUrl: str('PRIVACY_URL'), logoUrl: str('LOGO_URL'), supportUrl: str('SUPPORT_URL'), storeUrl: str('SHOPIFY_PUBLIC_URL'), faqs: kbFaqs().slice(0, 6) });
+  res.json({ open: h.open, hoursConfigured: h.configured, hoursText: str('SUPPORT_HOURS_TEXT'), retentionDays: num('RETENTION_DAYS', 90), privacyUrl: str('PRIVACY_URL'), logoUrl: str('LOGO_URL'), supportUrl: str('SUPPORT_URL'), storeUrl: str('SHOPIFY_PUBLIC_URL'), live: liveStatus(), faqs: kbFaqs().slice(0, 6) });
 });
 
 app.get('/api/product', requireSession, async (req, res) => {
@@ -151,6 +152,7 @@ app.post('/api/chat-stream', requireSession, async (req, res) => {
 const onVercel = Boolean(process.env.VERCEL);
 mountAdmin(app, store, { refreshKb: () => (onVercel ? Promise.reject(new Error('On Vercel the knowledge base is rebuilt during each deploy. Redeploy to refresh it.')) : buildKb()) });
 mountAbandon(app, store);
+mountLive(app, { store, requireSession });
 app.use((err, _req, res, _next) => { if (err.status >= 500 || !err.status) sec.logError('http', err); res.status(err.status || 500).json({ error: err.status === 413 ? 'Payload too large' : 'Bad request' }); });
 
 

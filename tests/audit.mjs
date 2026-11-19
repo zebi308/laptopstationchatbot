@@ -747,7 +747,7 @@ INFO('DEV-07', 'B4', 'Simulation vs reality', 'proves the widget logic end to en
 
 // ================================================================ 7. REMAINING GAPS (explicit)
 sec('Not built / limits');
-await GAP('GAP-01', 'C5', 'Live agent inbox: real-time takeover of a chat by a human (spec: native hand-off when an agent is online)', async () => (await fetch(U(P.A, '/admin/api/inbox'), { headers: { Authorization: 'Bearer admintok' } })).status !== 404);
+INFO('LIVE-01', 'C5', 'Live human hand-over via Slack', 'built and covered by tests/live.mjs (simulated Slack); NOT verified against a real Slack workspace. Needs Slack app, Supabase on Vercel')
 INFO('LIM-01', 'NFR', 'API protection', 'signed sessions + rate limits + daily cap deter casual abuse; this is not strong authentication (add Cloudflare Turnstile if abuse appears)');
 INFO('LIM-02', 'NFR', 'Multi-instance deployment', 'rate limits, daily cap and order lock-outs are in memory (single instance); use one instance or add Redis');
 INFO('LIM-03', 'NFR', 'Not verified against live services', 'Storefront-API mode, Dev Dashboard token request, Shopify webhook payload fields, Twilio/Resend delivery, Supabase, real store cart/checkout');
@@ -756,5 +756,5 @@ INFO('LIM-03', 'NFR', 'Not verified against live services', 'Storefront-API mode
 const count = (s) => R.filter((r) => r.status === s).length;
 console.log(`\n${count('PASS')} passed · ${count('FAIL')} failed · ${count('GAP')} gaps (required feature missing) · ${count('INFO')} observations`);
 fs.writeFileSync(path.join(root, 'tests', 'audit-results.json'), JSON.stringify({ ran: new Date().toISOString(), summary: { pass: count('PASS'), fail: count('FAIL'), gap: count('GAP'), info: count('INFO') }, results: R }, null, 2));
-procs.forEach((p) => p.kill()); upstream.close(); fs.rmSync(tmp, { recursive: true, force: true });
+procs.forEach((p) => p.kill()); upstream.close(); try { fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch (_) { /* a late debounced write can race the delete; the OS cleans /tmp */ }
 process.exit(count('FAIL') ? 1 : 0);
