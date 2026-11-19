@@ -41,7 +41,7 @@ const safe = async (fn) => { try { return await fn(); } catch (e) { sec.logError
 // ---- CORS: only your storefront(s)
 const allowed = str('ALLOWED_ORIGINS').split(',').map((s) => s.trim()).filter(Boolean);
 app.use('/api', (req, res, next) => {
-  const origin = req.headers.origin, ok = origin && (allowed.includes(origin) || allowed.includes('*'));
+  const origin = req.headers.origin, sameOrigin = origin && req.headers.host && origin === `https://${req.headers.host}`, ok = origin && (sameOrigin || allowed.includes(origin) || allowed.includes('*'));
   if (ok) {
     res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -68,7 +68,7 @@ app.post('/api/session', (req, res) => {
 
 app.get('/api/config', (_req, res) => {
   const h = hoursStatus();
-  res.json({ open: h.open, hoursConfigured: h.configured, hoursText: str('SUPPORT_HOURS_TEXT'), retentionDays: num('RETENTION_DAYS', 90), privacyUrl: str('PRIVACY_URL'), logoUrl: str('LOGO_URL'), supportUrl: str('SUPPORT_URL'), faqs: kbFaqs().slice(0, 6) });
+  res.json({ open: h.open, hoursConfigured: h.configured, hoursText: str('SUPPORT_HOURS_TEXT'), retentionDays: num('RETENTION_DAYS', 90), privacyUrl: str('PRIVACY_URL'), logoUrl: str('LOGO_URL'), supportUrl: str('SUPPORT_URL'), storeUrl: str('SHOPIFY_PUBLIC_URL'), faqs: kbFaqs().slice(0, 6) });
 });
 
 app.get('/api/product', requireSession, async (req, res) => {
@@ -153,12 +153,13 @@ mountAdmin(app, store, { refreshKb: () => (onVercel ? Promise.reject(new Error('
 mountAbandon(app, store);
 app.use((err, _req, res, _next) => { if (err.status >= 500 || !err.status) sec.logError('http', err); res.status(err.status || 500).json({ error: err.status === 413 ? 'Payload too large' : 'Bad request' }); });
 
-// ---- Diagnostics (needs ADMIN_TOKEN)
+
+// ---- Diagnostics (needs ADMIN_TOKEN): shows whether the server can read the catalogue and how many Asus items it indexes.
 app.get('/api/debug', async (req, res) => {
   const t = process.env.ADMIN_TOKEN;
   if (!t || req.headers.authorization !== `Bearer ${t}`) return res.status(401).json({ error: 'Unauthorized' });
   const { catalogStatus } = await import('./public-catalog.js');
-  res.json({ storefrontTokenSet: Boolean(process.env.SHOPIFY_STOREFRONT_TOKEN), publicUrl: process.env.SHOPIFY_PUBLIC_URL || null, kb: kbStats(), catalogue: await catalogStatus(), recentErrors: sec.recentErrors() });
+  res.json({ storefrontTokenSet: Boolean(process.env.SHOPIFY_STOREFRONT_TOKEN), publicUrl: process.env.SHOPIFY_PUBLIC_URL || null, kb: kbStats(), conditionFields: process.env.CONDITION_FIELDS || null, conditionSample: await (async () => { try { const { searchProducts } = await import('./shopify.js'); return (await searchProducts('laptop', 5)).map((p) => ({ title: p.title.slice(0, 50), condition: p.condition?.label || null, parts: p.condition?.parts?.length || 0 })); } catch (e) { return String(e.message); } })(), catalogue: await catalogStatus(), recentErrors: sec.recentErrors?.() ?? undefined });
 });
 
 // ---- Vercel Cron (daily): retention + abandoned-cart sweep. Vercel sends Authorization: Bearer CRON_SECRET.

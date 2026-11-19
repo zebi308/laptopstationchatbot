@@ -69,6 +69,9 @@
     variants: p.variants.map((v) => ({ id: String(v.id), title: v.title, price: v.price / 100, compareAt: v.compare_at_price ? v.compare_at_price / 100 : null, available: v.available, quantity: null })),
   });
 
+  // Product links are relative (/products/..). Off the store (test page, preview), point them at the real storefront.
+  const storeLink = (u) => { try { const base = state.config.storeUrl; if (base && /^\//.test(u) && new URL(base).hostname.replace(/^www\./, '') !== location.hostname.replace(/^www\./, '')) return base.replace(/\/$/, '') + u; } catch (e) { /* keep relative */ } return u; };
+
   // ---------- API (signed session token; refreshed automatically) ----------
   async function ensureSession(force) {
     if (!force && state.token && state.tokenExp > Date.now() + 60_000) return;
@@ -232,7 +235,7 @@
           h('strong', { class: 'ls-card-title' }, p.title), cond, condParts, price, stock,
           chips.length ? h('div', { class: 'ls-specs' }, chips.map((c) => h('span', { class: 'ls-spec' }, c))) : null,
           (p.highlights || []).length ? h('ul', {}, p.highlights.slice(0, chips.length ? 2 : 3).map((x) => h('li', {}, x))) : null,
-          h('a', { class: 'ls-details', href: p.url, target: '_blank', rel: 'noopener' }, 'View details ↗'))),
+          h('a', { class: 'ls-details', href: storeLink(p.url), target: '_blank', rel: 'noopener' }, 'View details ↗'))),
       select, h('div', { class: 'ls-row' }, add, buy));
   }
   function renderCards(col, products) {
