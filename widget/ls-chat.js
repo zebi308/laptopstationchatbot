@@ -540,7 +540,7 @@
 .ls-chat button{cursor:pointer}
 .ls-launcher{position:fixed;right:20px;bottom:20px;width:58px;height:58px;border-radius:50%;border:0;background:var(--a);color:#fff;display:grid;place-items:center;box-shadow:0 8px 24px rgba(20,20,60,.3);z-index:2147482000;transition:transform .15s}
 .ls-launcher:hover{transform:scale(1.06)}
-.ls-window{position:fixed;right:20px;bottom:20px;width:410px;height:min(600px,calc(100vh - 40px));background:#fff;border-radius:22px;box-shadow:0 18px 60px rgba(20,20,60,.32);display:flex;flex-direction:column;overflow:hidden;z-index:2147482001}
+.ls-window{position:fixed;right:20px;bottom:20px;width:min(460px,calc(100vw - 40px));height:min(780px,calc(100vh - 40px));background:#fff;border-radius:22px;box-shadow:0 18px 60px rgba(20,20,60,.32);display:flex;flex-direction:column;overflow:hidden;z-index:2147482001}
 .ls-window.ls-full{right:0;bottom:0;width:100vw;height:100vh;border-radius:0}
 @media(max-width:520px){.ls-window{right:0;bottom:0;width:100vw;height:100%;border-radius:0}.ls-fullbtn{display:none}}
 .ls-header{display:flex;align-items:center;gap:10px;padding:13px 14px;min-height:76px;background:var(--a);color:#fff;flex:none}
