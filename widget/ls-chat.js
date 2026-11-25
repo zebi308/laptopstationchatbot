@@ -10,7 +10,7 @@
   const CFG = {
     title: ds.title || 'Laptop Station Assistant',
     accent: ds.accent || '#4545c4',
-    handle: ds.productHandle || '',
+    handle: ds.productHandle || ((location.pathname.match(/\/products\/([a-z0-9][a-z0-9_.-]*)/i) || [])[1] || ''),
     support: ds.supportUrl || '',
     logo: ds.logo || '',
     greeting: ds.greeting || 'Hi! How can I help you find the right laptop today?',
