@@ -98,18 +98,32 @@ export function normalizeProduct(n) {
 }
 
 async function sfSearch(q, limit = 5, f = {}) {
-  const run = async (qs, n) => (await storefront(`query($q: String!, $n: Int!) { products(first: $n, query: $q, sortKey: RELEVANCE) { nodes { ...P } } } ${fragment()}`, { q: qs, n })).products.nodes.map(normalizeProduct);
+  // Pages through Storefront results (up to `pages` x 100) so accessories ranking first cannot hide the laptops.
+  const run = async (qs, n, pages = 1) => {
+    const out = []; let after = null;
+    for (let i = 0; i < pages; i++) {
+      const d = (await storefront(`query($q: String!, $n: Int!, $a: String) { products(first: $n, after: $a, query: $q, sortKey: RELEVANCE) { pageInfo { hasNextPage endCursor } nodes { ...P } } } ${fragment()}`, { q: qs, n, a: after })).products;
+      out.push(...d.nodes.map(normalizeProduct));
+      if (!d.pageInfo?.hasNextPage) break;
+      after = d.pageInfo.endCursor;
+    }
+    return out;
+  };
   const clean = String(q || '').replace(/["():]/g, ' ').trim();
   const parts = [clean];
   if (Number.isFinite(f.maxPrice)) parts.push(`variants.price:<=${f.maxPrice}`);
   if (Number.isFinite(f.minPrice)) parts.push(`variants.price:>=${f.minPrice}`);
   if (f.inStock) parts.push('available_for_sale:true');
+  if (f.excludeAddons) {
+    for (const t of list('ADDON_TYPES', 'software,service,services,accessory,accessories,add-on,addon,add-ons,protection,warranty')) parts.push(`-product_type:'${t.replace(/'/g, '')}'`);
+    for (const t of list('ADDON_TAGS', 'addon,add-on')) parts.push(`-tag:'${t.replace(/'/g, '')}'`);
+  }
   const filtered = parts.length > 1;
   const n = Math.min(Math.max(filtered ? Math.max(limit, 100) : limit, 1), 100);
   let out = [];
-  try { out = await run(parts.filter(Boolean).join(' '), n); } catch (e) { if (!filtered) throw e; }
+  try { out = await run(parts.filter(Boolean).join(' '), n, filtered ? 3 : 1); } catch (e) { if (!filtered) throw e; }
   // If Shopify's filter syntax returned nothing, fall back to a wider plain search; tools.js filters the rest locally.
-  if (!out.length && filtered) out = await run(clean, 100);
+  if (!out.length && filtered) out = await run(clean, 100, 3);
   return out;
 }
 async function sfGet(handle) {

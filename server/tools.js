@@ -80,7 +80,7 @@ export async function runTool(name, input, ctx) {
     switch (name) {
       case 'search_products': {
         const kind = input.kind || 'main', q = String(input.query || '').slice(0, 120);
-        let items = await searchProducts(q, 60, { maxPrice: input.max_price, minPrice: input.min_price, inStock: input.in_stock_only !== false && kind !== 'addon' });
+        let items = await searchProducts(q, 60, { maxPrice: input.max_price, minPrice: input.min_price, inStock: input.in_stock_only !== false && kind !== 'addon', excludeAddons: kind === 'main' });
         if (kind === 'addon' && (!items.some((p) => p.isAddon) || !q.trim() || q.trim() === '*')) items = await listAddonProducts();
         if (kind === 'main') items = items.filter((p) => !p.isAddon); else if (kind === 'addon') items = items.filter((p) => p.isAddon);
         const low = (p) => Math.min(...p.variants.map((v) => v.price));
